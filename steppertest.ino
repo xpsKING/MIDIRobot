@@ -18,6 +18,7 @@ bool noteOn=false;
 bool receivedNoteNum=false;
 bool receivedNoteVel=false;
 bool noteOff=false;
+int lastNote=60;
 DRV8825 stepper(MOTOR_STEPS, DIR, STEP, MS1, MS2, MS3);
 
 void setup() {
@@ -25,7 +26,16 @@ void setup() {
     stepper.begin(240, 1);
     Serial.begin(9600);
 }
+int noteToDeg(int msg){
+    lastNote=msg;
 
+    if(msg == 60){
+        return 250;
+    }
+    if(msg == 61){
+        return 100;
+    }
+}
 void loop() {
 
  int msg = Serial.read();
@@ -34,9 +44,9 @@ void loop() {
   noteOn=true;
   noteOff=false;
  }
- if(noteOn&& !receivedNoteNum && msg==60 &&!receivedNoteVel &&!noteOff &&msg <128){
-  //note 60
-  stepper.rotate(30);
+ if(noteOn&& !receivedNoteNum &&!receivedNoteVel &&!noteOff &&msg <128){
+  
+  stepper.rotate(noteToDeg(msg));
   receivedNoteNum=true;
  }
  if(noteOn&& receivedNoteNum && !receivedNoteVel &&!noteOff&&msg <128){
@@ -44,11 +54,11 @@ void loop() {
   receivedNoteVel=true;
  }
  if(noteOn&& receivedNoteNum && receivedNoteVel && msg==128 &&!noteOff){
-  //note off
+  //noteOff signal
   noteOn=false;
   receivedNoteNum=false;
   receivedNoteVel=false;
-  stepper.rotate(-30);
+  stepper.rotate(-1* noteToDeg(lastNote));  
   noteOff=true;
   
   
